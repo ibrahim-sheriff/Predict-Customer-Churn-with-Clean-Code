@@ -5,7 +5,6 @@ Date: August, 2021
 '''
 
 # import libraries
-import logging
 from sklearn.metrics import plot_roc_curve, classification_report, roc_auc_score
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
@@ -20,20 +19,15 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
+from utils import setup_logger
 sns.set()
 matplotlib.use('Agg')
 
 
-logging.basicConfig(
-    filename='./logs/churn_library.log',
-    level=logging.INFO,
-    filemode='w',
-    format='%(asctime)-15s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger()
+logger = setup_logger('main_logger', './logs/churn_library.log')
 
 with open("config.yaml", 'r') as f:
-    config=yaml.safe_load(f)
+    config = yaml.safe_load(f)
 
 
 def import_data(file_path):
@@ -65,35 +59,39 @@ def perform_eda(df_data):
 
     fig = plt.figure(figsize=(8, 6))
     sns.countplot(x=df_data['Churn'])
-    fig.savefig(save_path + 'churn_distribution.png')
+    fig.savefig(save_path + config['eda']['plots']['fig_churn_distribution'])
 
     fig = plt.figure(figsize=(12, 8))
     sns.histplot(x='Customer_Age', hue='Churn', kde=True, data=df_data)
-    fig.savefig(save_path + 'customer_age_distribution.png')
+    fig.savefig(save_path + config['eda']['plots']['fig_customer_age_distribution'])
 
     fig = plt.figure(figsize=(12, 8))
     sns.countplot(x='Marital_Status', hue='Churn', data=df_data)
-    fig.savefig(save_path + 'marital_status_distribution.png')
+    fig.savefig(save_path + config['eda']['plots']['fig_marital_status_distribution'])
 
     fig = plt.figure(figsize=(12, 8))
     sns.countplot(x='Education_Level', hue='Churn', data=df_data)
-    fig.savefig(save_path + 'education_level_distribution.png')
+    fig.savefig(save_path + config['eda']['plots']['fig_education_level_distribution'])
 
     fig = plt.figure(figsize=(12, 8))
     sns.countplot(x='Income_Category', hue='Churn', data=df_data)
-    fig.savefig(save_path + 'income_category_distribution.png')
+    fig.savefig(save_path + config['eda']['plots']['fig_income_category_distribution'])
 
     fig = plt.figure(figsize=(12, 8))
     sns.histplot(x='Total_Trans_Ct', hue='Churn', kde=True, data=df_data)
-    fig.savefig(save_path + 'total_transaction_count_distribution.png')
+    fig.savefig(save_path + config['eda']['plots']['fig_total_trans_cnt_distribution'])
 
     fig = plt.figure(figsize=(12, 8))
     sns.histplot(x='Total_Trans_Amt', hue='Churn', kde=True, data=df_data)
-    fig.savefig(save_path + 'total_transaction_amount_distribution.png')
+    fig.savefig(save_path + config['eda']['plots']['fig_total_trans_amt_distribution'])
 
     fig = plt.figure(figsize=(12, 8))
-    sns.histplot(x='Avg_Utilization_Ratio', hue='Churn', kde=True, data=df_data)
-    fig.savefig(save_path + 'average_utilization_ratio_distribution.png')
+    sns.histplot(
+        x='Avg_Utilization_Ratio',
+        hue='Churn',
+        kde=True,
+        data=df_data)
+    fig.savefig(save_path + config['eda']['plots']['fig_marital_status_x_total_trans_cnt'])
 
     fig = sns.catplot(
         x='Marital_Status',
@@ -105,7 +103,7 @@ def perform_eda(df_data):
         aspect=2)
     fig.savefig(
         save_path +
-        'marital_status_x_total_transaction_count_box_plot.png')
+        config['eda']['plots']['fig_marital_status_x_total_trans_cnt_x_gender'])
 
     fig = sns.catplot(
         x='Marital_Status',
@@ -118,7 +116,7 @@ def perform_eda(df_data):
         aspect=2)
     fig.savefig(
         save_path +
-        'marital_status_x_total_transaction_count_x_gender_box_plot.png')
+        config['eda']['plots']['fig_marital_status_x_total_trans_amt'])
 
     fig = sns.catplot(
         x='Marital_Status',
@@ -130,7 +128,7 @@ def perform_eda(df_data):
         aspect=2)
     fig.savefig(
         save_path +
-        'marital_status_x_total_transaction_amount_box_plot')
+        config['eda']['plots']['fig_marital_status_x_total_trans_amt_x_gender'])
 
     fig = sns.catplot(
         x='Marital_Status',
@@ -143,7 +141,7 @@ def perform_eda(df_data):
         aspect=2)
     fig.savefig(
         save_path +
-        'marital_status_x_total_transaction_amount_x_gender_box_plot.png')
+        config['eda']['plots']['fig_churn_distribution'])
 
     fig = sns.jointplot(
         x="Total_Trans_Ct",
@@ -153,7 +151,7 @@ def perform_eda(df_data):
         height=10)
     fig.savefig(
         save_path +
-        'total_transaction_amt_x_total_transaction_cnt_scatter_plot.png')
+        config['eda']['plots']['fig_total_trans_amt_x_total_trans_cnt'])
 
     plt.figure(figsize=(16, 6))
     mask = np.triu(np.ones_like(df_data.corr(), dtype=np.bool_))
@@ -171,7 +169,7 @@ def perform_eda(df_data):
         pad=16)
     plt.savefig(
         save_path +
-        'features_correlation_heatmap.png',
+        config['eda']['plots']['fig_features_correlation_heatmap'],
         bbox_inches='tight')
 
 
@@ -204,7 +202,8 @@ def perform_feature_engineering(df_data, drop_columns):
         y_test (pandas dataframe): y testing data
     """
     # create new feature Total transaction average ticket size
-    df_data['Total_Trans_Ats'] = df_data['Total_Trans_Amt'] / df_data['Total_Trans_Ct']
+    df_data['Total_Trans_Ats'] = df_data['Total_Trans_Amt'] / \
+        df_data['Total_Trans_Ct']
 
     # get X and y datasets
     x_data = df_data.drop(drop_columns + ['Churn'], axis=1)
@@ -212,7 +211,8 @@ def perform_feature_engineering(df_data, drop_columns):
 
     # train test split
     x_train, x_test, y_train, y_test = train_test_split(
-        x_data, y_data, test_size=config['data']['test_size'], stratify=y_data, random_state=config['random_state'])
+        x_data, y_data, test_size=config['data']['test_size'],
+        stratify=y_data, random_state=config['random_state'])
 
     return x_train, x_test, y_train, y_test
 
@@ -316,7 +316,13 @@ def roc_curve_image(x_data, y_data, split_data, *models):
             model_name = model['model'].__class__.__name__
 
         # create and save roc curve plots
-        plot_roc_curve(model, x_data, y_data, ax=ax, alpha=0.8, name=model_name)
+        plot_roc_curve(
+            model,
+            x_data,
+            y_data,
+            ax=ax,
+            alpha=0.8,
+            name=model_name)
 
     save_path = config['metrics']['save_path']
     plt.savefig(f"{save_path}{split_data}_roc_auc_curve.png")
@@ -369,31 +375,6 @@ def main():
     """
     Main function to run script
     """
-    cat_columns = [
-        'Gender',
-        'Education_Level',
-        'Marital_Status',
-        'Income_Category',
-        'Card_Category'
-    ]
-
-    numeric_columns = [
-        'Customer_Age',
-        'Dependent_count',
-        'Months_on_book',
-        'Total_Relationship_Count',
-        'Months_Inactive_12_mon',
-        'Contacts_Count_12_mon',
-        'Credit_Limit',
-        'Total_Revolving_Bal',
-        'Avg_Open_To_Buy',
-        'Total_Amt_Chng_Q4_Q1',
-        'Total_Trans_Amt',
-        'Total_Trans_Ct',
-        'Total_Ct_Chng_Q4_Q1',
-        'Avg_Utilization_Ratio'
-    ]
-
     logger.info("Loading csv file into dataframe")
     df_data = import_data(config['data']['csv_path'])
 
@@ -401,11 +382,12 @@ def main():
     perform_eda(df_data)
 
     logger.info("Encoding categorical columns")
-    df_data = encoder_helper(df_data, cat_columns)
+    df_data = encoder_helper(df_data, config['data']['categorical_features'])
 
     drop_columns = ['CLIENTNUM']
     logger.info("Performing feature engineering")
-    x_train, x_test, y_train, y_test = perform_feature_engineering(df_data, drop_columns)
+    x_train, x_test, y_train, y_test = perform_feature_engineering(
+        df_data, drop_columns)
 
     logger.info("x_train data shape: %s", x_train.shape)
     logger.info("y_train data shape: %s", y_train.shape)

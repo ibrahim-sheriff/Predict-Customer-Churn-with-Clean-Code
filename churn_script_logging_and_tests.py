@@ -1,14 +1,21 @@
-import os
-import logging
-import churn_library as cls
+'''
+Author: Ibrahim Sherif
+Date: August, 2021
+'''
 
-logging.basicConfig(
-    filename='./logs/churn_library.log',
-    level=logging.INFO,
-    filemode='w',
-    format='%(asctime)-15s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger()
+import logging
+import math
+import yaml
+from sklearn.ensemble import RandomForestClassifier
+import churn_library as cls
+from utils import setup_logger, check_file_exists
+
+
+logger = setup_logger('test_logger', './logs/tests_churn_library.log')
+logging.getLogger('main_logger').disabled = True
+
+with open("config.yaml", 'r') as f:
+    config = yaml.safe_load(f)
 
 
 def test_import(file_path):
@@ -17,139 +24,275 @@ def test_import(file_path):
     """
     try:
         df_data = cls.import_data(file_path)
-        logging.info("Testing import_data: SUCCESS Reading data")
+        logger.info("SUCCESS Reading data")
     except FileNotFoundError as error:
-        logging.error("Testing import_eda: The file wasn't found %s", error)
-  
+        logger.error("The file wasn't found %s", error)
+
     try:
         assert df_data.shape[0] > 0
         assert df_data.shape[1] > 0
-        logging.info("Testing import_data: SUCCESS Data loaded")
+        logger.info("SUCCESS Data loaded")
     except AssertionError as error:
-        logging.error("Testing import_data: The file doesn't appear to have rows and columns %s", error)
- 
+        logger.error(
+            "The file doesn't appear to have rows and columns %s",
+            error)
+
     try:
         assert "Churn" in df_data.columns.values
-        logging.info("Testing import_data: SUCCESS Churn target variable is found")
+        logger.info(
+            "SUCCESS Churn target variable is found")
     except AssertionError as error:
-        logging.error("Testing import_data: The dataframe doesn't contain Churn target variable %s", error)
+        logger.error(
+            "The dataframe doesn't contain Churn target variable %s",
+            error)
+
+    return df_data
 
 
-def test_eda(perform_eda):
+def test_eda(df_data):
     """
     Test perform eda function
     """
-    df_data = cls.import_data("./data/bank_data.csv")
     try:
-        perform_eda(df_data)
-        logging.info("Testing perform_eda: SUCCESS")
+        cls.perform_eda(df_data)
+        logger.info("SUCCESS eda function worked")
     except KeyError as error:
-        logging.error("Testing perform_eda: The dataframe is missing some columns for the eda %s", error)
-    
+        logger.error(
+            "The dataframe is missing some columns for the eda %s %s",
+            error, error)
+
+    save_path = config['eda']['save_path']
     try:
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'churn_distribution.png'))
-        logging.info("Testing perform_eda: churn_distribution.png file found")
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'customer_age_distribution.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'marital_status_distribution.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'education_level_distribution.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'income_category_distribution.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'total_transaction_count_distribution.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'total_transaction_amount_distribution.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'marital_status_x_total_transaction_count_box_plot.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'marital_status_x_total_transaction_count_x_gender_box_plot.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'marital_status_x_total_transaction_amount_box_plot.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'marital_status_x_total_transaction_amount_x_gender_box_plot.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'total_transaction_amt_x_total_transaction_cnt_scatter_plot.png'))
-        assert os.path.exists(os.path.join(os.path.abspath('./images/EDA'), 'features_correlation_heatmap.png'))
-        
-    except:
-        pass
+        for _, val in config['eda']['plots'].items():
+            assert check_file_exists(save_path, val)
+            logger.info("SUCCESS %s plot found", val)
+    except AssertionError as error:
+        logger.error(
+            "%s plot not found in path %s %s",
+            val, save_path, error)
 
 
-def test_encoder_helper(encoder_helper):
+def test_encoder_helper(df_data):
     """
     Test encoder helper
     """
-    df_data = cls.import_data("./data/bank_data.csv")
-    cat_columns = [
-        'Gender',
-        'Education_Level',
-        'Marital_Status',
-        'Income_Category',
-        'Card_Category'
-    ]
     try:
         # Check column presence
-        assert set(df_data.columns.values).issuperset(set(cat_columns))
-        logging.info("Testing encoder_helper: SUCCESS All categorical columns are available")
+        assert set(df_data.columns.values).issuperset(
+            set(config['data']['categorical_features']))
+        logger.info(
+            "SUCCESS All categorical columns are available")
     except AssertionError as error:
-        logging.error("Testing encoder_helper: Not all categorical variables are available %s", error)
- 
+        logger.error(
+            "Not all categorical variables are available %s",
+            error)
+
     try:
-        encoder_helper(df_data, cat_columns)
-        logging.info("Testing encoder_helper: SUCCESS")
+        cls.encoder_helper(df_data, config['data']['categorical_features'])
+        logger.info(
+            "SUCCESS Categorical variables encoded")
     except KeyError as error:
-        logging.info("Testing encoder_helper: The dataframe is missing a categorical column %s", error)
- 
+        logger.info(
+            "Encoding categorical variables failed %s",
+            error)
 
-def test_perform_feature_engineering(perform_feature_engineering):
+    return df_data
+
+
+def test_perform_feature_engineering(df_data):
     """
-    Test perform_feature_engineering
+    Test perform_feature_engineering function
     """
-    cat_columns = [
-        'Gender',
-        'Education_Level',
-        'Marital_Status',
-        'Income_Category',
-        'Card_Category'
-    ]
-
-    numeric_columns = [
-        'Customer_Age',
-        'Dependent_count',
-        'Months_on_book',
-        'Total_Relationship_Count',
-        'Months_Inactive_12_mon',
-        'Contacts_Count_12_mon',
-        'Credit_Limit',
-        'Total_Revolving_Bal',
-        'Avg_Open_To_Buy',
-        'Total_Amt_Chng_Q4_Q1',
-        'Total_Trans_Amt',
-        'Total_Trans_Ct',
-        'Total_Ct_Chng_Q4_Q1',
-        'Avg_Utilization_Ratio'
-    ]
-
-    df_data = cls.import_data("./data/bank_data.csv")
-    df_data = cls.encoder_helper(df_data)
+    drop_columns = ['CLIENTNUM']
     try:
-        perform_feature_engineering(df_data, cat_columns, numeric_columns)
-        logging.info("Testing perform_feature_engineering: SUCCESS Feature engineering done")
+        x_train, x_test, y_train, y_test = cls.perform_feature_engineering(
+            df_data, drop_columns)
+        logger.info(
+            "SUCCESS Feature engineering done")
     except KeyError as error:
-        logging.error("Testing perform_feature_engineering: There is a problem with feature engineering %s", error)
+        logger.error(
+            "There is a problem with feature engineering %s",
+            error)
+
+    # Test 'Total_Trans_Ats' feature available or not
+    try:
+        assert "Total_Trans_Ats" in x_train.columns.values
+        assert "Total_Trans_Ats" in x_test.columns.values
+        logger.info(
+            "SUCCESS Total_Trans_Ats feature found")
+    except AssertionError:
+        logger.error(
+            "Total_Trans_Ats feature not found %s",
+            error)
+
+    # Check drop_columns not available
+    try:
+        assert set(drop_columns).isdisjoint(set(x_train.columns.values))
+        assert set(drop_columns).isdisjoint(set(x_test.columns.values))
+        logger.info(
+            "SUCCESS drop_columns successfully dropped")
+    except AssertionError:
+        logger.error(
+            "drop_columns not dropped")
+
+    # Check target variable 'Churn' correctly placed
+    try:
+        assert "Churn" not in x_train.columns.values
+        assert "Churn" not in x_test.columns.values
+        assert "Churn" in y_train.name
+        assert "Churn" in y_test.name
+        logger.info(
+            "SUCCESS Target variable 'Churn' in y data only")
+    except AssertionError:
+        logger.error(
+            "Target variable 'Churn' misplaced")
+
+    # Check y data only has 'Churn' column
+    try:
+        assert len(y_train.shape) == 1
+        assert len(y_test.shape) == 1
+        logger.info(
+            "SUCCESS y data only contains 'Churn' column")
+    except AssertionError:
+        logger.error(
+            "'Churn' column misplaced")
+
+    # Check correct split % of test size
+    try:
+        assert math.ceil(
+            df_data.shape[0] *
+            config['data']['test_size']) == x_test.shape[0]
+        assert math.ceil(
+            df_data.shape[0] *
+            config['data']['test_size']) == y_test.shape[0]
+        logger.info(
+            "SUCCESS Test data size correct")
+    except AssertionError:
+        logger.error(
+            "Test data size is incorrect")
+
+    return x_train, x_test, y_train, y_test
 
 
-def test_train_models(train_models):
+def test_train_and_evaluate_model(x_train, x_test, y_train, y_test):
     """
-    Test train_models
+    Test train_and_evaluate_model function
     """
+    model = RandomForestClassifier(random_state=config['random_state'])
+    model_name = model.__class__.__name__
+    try:
+        model = cls.train_and_evaluate_model(
+            model, x_train, x_test, y_train, y_test)
+        logger.info("SUCCESS training and evaluating model")
+    except BaseException:
+        logger.error("Model training/evaluting failed")
 
+    image_name = f'classification_report_{model_name}.png'
+    try:
+        assert check_file_exists(config['metrics']['save_path'], image_name)
+        logger.info("SUCCESS classification report image %s saved", image_name)
+    except AssertionError:
+        logger.info(
+            "classification report image %s not found in path %s",
+            image_name,
+            config['metrics']['save_path'])
+
+    try:
+        assert check_file_exists(
+            config['models']['save_path'],
+            f'{model_name}.pkl')
+        logger.info("SUCCESS model saved %s", f'{model_name}.pkl')
+    except AssertionError:
+        logger.info(
+            "model pickle file %s not found in path %s",
+            f'{model_name}.pkl',
+            config['models']['save_path'])
+
+    return model
+
+
+def test_roc_curve_image(x_train, y_train, model):
+    """
+    Test test_roc_curve_image function
+    """
+    data_split = "Train"
+    try:
+        cls.roc_curve_image(x_train, y_train, data_split, model)
+        logger.info("SUCCESS computed the roc curve")
+    except BaseException:
+        logger.error("There was a problem with the roc curve ")
+
+    image_name = f'{data_split}_roc_auc_curve.png'
+    try:
+        assert check_file_exists(config['metrics']['save_path'], image_name)
+        logger.info("SUCCESS roc curve image %s saved")
+    except AssertionError:
+        logger.info("roc curve image %s not found in path %s",
+                    image_name, config['metrics']['save_path'])
+
+
+def test_feature_importance_plot(model, x_data):
+    """
+    Test feature_importance_plot function
+    """
+    model_name = model.__class__.__name__
+    try:
+        cls.feature_importance_plot(model, x_data)
+        logger.info("SUCCESS computed feature importance plot")
+    except BaseException:
+        logger.error("There was a problem with the feature importance plots")
+
+    image_name = f'{model_name}_shap_feature_importance.png'
+    try:
+        assert check_file_exists(config['metrics']['save_path'], image_name)
+        logger.info(
+            "SUCCESS shap feature importance image %s saved",
+            image_name)
+    except AssertionError:
+        logger.info(
+            "shap feature importance image %s not found in path %s",
+            image_name,
+            config['metrics']['save_path'])
+
+    image_name = f'{model_name}_feature_importance.png'
+    try:
+        assert check_file_exists(config['metrics']['save_path'], image_name)
+        logger.info(
+            "SUCCESS model feature importance image %s saved",
+            image_name)
+    except AssertionError:
+        logger.info(
+            "model feature importance image %s not found in path %s",
+            image_name,
+            config['metrics']['save_path'])
 
 
 def run():
-    test_import("./data/bank_data.csv")
-    test_eda()
-    test_encoder_helper(cls.encoder_helper)
-    test_perform_feature_engineering(cls.perform_eda)
+    """
+    Main function to run script
+    """
+    logger.info("TESTING import_data")
+    df_data = test_import(config['data']['csv_path'])
+
+    logger.info("TESTING perform_eda function")
+    test_eda(df_data)
+
+    logger.info("TESTING encoder_helper function")
+    df_data = test_encoder_helper(df_data)
+
+    logger.info("TESTING perform_feature_engineering function")
+    x_train, x_test, y_train, y_test = test_perform_feature_engineering(
+        df_data)
+
+    logger.info("TESTING test_train_and_evaluate_model function")
+    model = test_train_and_evaluate_model(x_train, x_test, y_train, y_test)
+
+    logger.info("TESTING roc_curve_image function")
+    test_roc_curve_image(x_train, y_train, model)
+
+    logger.info("TESTING feature_importance_plot function")
+    test_feature_importance_plot(model, x_test)
+
 
 if __name__ == "__main__":
     run()
-
-
-
-
-
-
-
-

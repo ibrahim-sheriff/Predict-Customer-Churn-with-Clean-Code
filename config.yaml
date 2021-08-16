@@ -24,19 +24,20 @@ data:
   test_size: 0.3
 eda:
   save_path: "./images/EDA/"
-  fig_churn_distribution: "churn_distribution.png"
-  fig_customer_age_distribution: "customer_age_distribution.png"
-  fig_marital_status_distribution: "marital_status_distribution.png"
-  fig_education_level_distribution: "education_level_distribution.png"
-  fig_income_category_distribution: "income_category_distribution.png"
-  fig_total_trans_cnt_distribution: "total_trans_cnt_distribution.png"
-  fig_total_trans_amt_distribution: "total_trans_amt_distribution.png"
-  fig_marital_status_x_total_trans_cnt: "marital_status_x_total_trans_cnt.png"
-  fig_marital_status_x_total_trans_cnt_x_gender: "marital_status_x_total_trans_cnt_x_gender.png"
-  fig_marital_status_x_total_trans_amt: "marital_status_x_total_trans_amt.png"
-  fig_marital_status_x_total_trans_amt_x_gender: "marital_status_x_total_trans_amt_x_gender.png"
-  fig_total_trans_amt_x_total_trans_cnt: "total_trans_amt_x_total_trans_cnt.png"
-  fig_features_correlation_heatmap: "features_correlation_heatmap.png"
+  plots:
+    fig_churn_distribution: "churn_distribution.png"
+    fig_customer_age_distribution: "customer_age_distribution.png"
+    fig_marital_status_distribution: "marital_status_distribution.png"
+    fig_education_level_distribution: "education_level_distribution.png"
+    fig_income_category_distribution: "income_category_distribution.png"
+    fig_total_trans_cnt_distribution: "total_trans_cnt_distribution.png"
+    fig_total_trans_amt_distribution: "total_trans_amt_distribution.png"
+    fig_marital_status_x_total_trans_cnt: "marital_status_x_total_trans_cnt.png"
+    fig_marital_status_x_total_trans_cnt_x_gender: "marital_status_x_total_trans_cnt_x_gender.png"
+    fig_marital_status_x_total_trans_amt: "marital_status_x_total_trans_amt.png"
+    fig_marital_status_x_total_trans_amt_x_gender: "marital_status_x_total_trans_amt_x_gender.png"
+    fig_total_trans_amt_x_total_trans_cnt: "total_trans_amt_x_total_trans_cnt.png"
+    fig_features_correlation_heatmap: "features_correlation_heatmap.png"
 metrics:
   save_path: "./images/metrics/"
 models:
