@@ -21,6 +21,7 @@ data:
     - "Marital_Status"
     - "Income_Category"
     - "Card_Category"
+  test_size: 0.3
 eda:
   save_path: "./images/EDA/"
   fig_churn_distribution: "churn_distribution.png"
@@ -39,14 +40,14 @@ eda:
 metrics:
   save_path: "./images/metrics/"
 models:
-  - save_path: "./models/"
-  - names:
+  save_path: "./models/"
+  names:
     - "LogisticRegression"
     - "RandomForestClassifier"
-  - random_forest:
-    - n_estimators: 180
-    - max_depth: 13
-    - criterion: 'entropy'
-    - max_features: 'auto'
-    - random_state: 42
+  random_forest:
+    n_estimators: 180
+    max_depth: 13
+    criterion: 'entropy'
+    max_features: 'auto'
+    random_state: 42
 random_state: 42

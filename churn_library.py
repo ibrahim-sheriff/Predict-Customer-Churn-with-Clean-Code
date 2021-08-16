@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 import matplotlib
 import shap
+import yaml
 import joblib
 import numpy as np
 import pandas as pd
@@ -30,6 +31,9 @@ logging.basicConfig(
     format='%(asctime)-15s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger()
+
+with open("config.yaml", 'r') as f:
+    config=yaml.safe_load(f)
 
 
 def import_data(file_path):
@@ -57,7 +61,7 @@ def perform_eda(df_data):
     Returns:
         None
     """
-    save_path = './images/EDA/'
+    save_path = config['eda']['save_path']
 
     fig = plt.figure(figsize=(8, 6))
     sns.countplot(x=df_data['Churn'])
@@ -208,7 +212,7 @@ def perform_feature_engineering(df_data, drop_columns):
 
     # train test split
     x_train, x_test, y_train, y_test = train_test_split(
-        x_data, y_data, test_size=0.3, stratify=y_data, random_state=42)
+        x_data, y_data, test_size=config['data']['test_size'], stratify=y_data, random_state=config['random_state'])
 
     return x_train, x_test, y_train, y_test
 
@@ -243,7 +247,7 @@ def classification_report_image(
              {'fontsize': 10}, fontproperties='monospace')
     plt.axis('off')
 
-    save_path = './images/metrics/'
+    save_path = config['metrics']['save_path']
     plt.savefig(
         f"{save_path}classification_report_{model_name}.png",
         bbox_inches='tight')
@@ -287,7 +291,7 @@ def train_and_evaluate_model(model, x_train, x_test, y_train, y_test):
         model_name)
 
     logger.info("Saving model")
-    save_path = "./models/"
+    save_path = config['models']['save_path']
     joblib.dump(model, f"{save_path}{model_name}.pkl")
 
     return model
@@ -314,7 +318,7 @@ def roc_curve_image(x_data, y_data, split_data, *models):
         # create and save roc curve plots
         plot_roc_curve(model, x_data, y_data, ax=ax, alpha=0.8, name=model_name)
 
-    save_path = './images/metrics/'
+    save_path = config['metrics']['save_path']
     plt.savefig(f"{save_path}{split_data}_roc_auc_curve.png")
 
 
@@ -327,7 +331,7 @@ def feature_importance_plot(model, x_data):
     Returns:
         None
     """
-    save_path = "./images/metrics/"
+    save_path = config['metrics']['save_path']
     model_name = model.__class__.__name__
     if isinstance(model, Pipeline):
         model_name = model['model'].__class__.__name__
@@ -365,8 +369,6 @@ def main():
     """
     Main function to run script
     """
-    file_path = "./data/bank_data.csv"
-
     cat_columns = [
         'Gender',
         'Education_Level',
@@ -393,7 +395,7 @@ def main():
     ]
 
     logger.info("Loading csv file into dataframe")
-    df_data = import_data(file_path)
+    df_data = import_data(config['data']['csv_path'])
 
     logger.info("Performing and saving EDA plots")
     perform_eda(df_data)
@@ -413,18 +415,13 @@ def main():
     logger.info("Training logistic regression model")
     model_lr = Pipeline([
         ('scaler', StandardScaler()),
-        ('model', LogisticRegression(random_state=42))
+        ('model', LogisticRegression(random_state=config['random_state']))
     ])
     model_lr = train_and_evaluate_model(
         model_lr, x_train, x_test, y_train, y_test)
 
     logger.info("Training random forest model")
-    model_rf = RandomForestClassifier(
-        n_estimators=180,
-        max_depth=13,
-        criterion='entropy',
-        max_features='auto',
-        random_state=42)
+    model_rf = RandomForestClassifier(**config['models']['random_forest'])
     model_rf = train_and_evaluate_model(
         model_rf, x_train, x_test, y_train, y_test)
 
