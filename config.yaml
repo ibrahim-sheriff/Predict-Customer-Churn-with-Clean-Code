@@ -1,0 +1,52 @@
+data:
+  csv_path: "./data/bank_data.csv"
+  numeric_features:
+    - "Customer_Age"
+    - "Dependent_count"
+    - "Months_on_book"
+    - "Total_Relationship_Count"
+    - Months_Inactive_12_mon"
+    - "Contacts_Count_12_mon"
+    - Credit_Limit"
+    - "Total_Revolving_Bal"
+    - "Avg_Open_To_Buy"
+    - "Total_Amt_Chng_Q4_Q1"
+    - "Total_Trans_Amt"
+    - "Total_Trans_Ct"
+    - "Total_Ct_Chng_Q4_Q1"
+    - "Avg_Utilization_Ratio"
+  categorical_features:
+    - "Gender"
+    - "Education_Level"
+    - "Marital_Status"
+    - "Income_Category"
+    - "Card_Category"
+eda:
+  save_path: "./images/EDA/"
+  fig_churn_distribution: "churn_distribution.png"
+  fig_customer_age_distribution: "customer_age_distribution.png"
+  fig_marital_status_distribution: "marital_status_distribution.png"
+  fig_education_level_distribution: "education_level_distribution.png"
+  fig_income_category_distribution: "income_category_distribution.png"
+  fig_total_trans_cnt_distribution: "total_trans_cnt_distribution.png"
+  fig_total_trans_amt_distribution: "total_trans_amt_distribution.png"
+  fig_marital_status_x_total_trans_cnt: "marital_status_x_total_trans_cnt.png"
+  fig_marital_status_x_total_trans_cnt_x_gender: "marital_status_x_total_trans_cnt_x_gender.png"
+  fig_marital_status_x_total_trans_amt: "marital_status_x_total_trans_amt.png"
+  fig_marital_status_x_total_trans_amt_x_gender: "marital_status_x_total_trans_amt_x_gender.png"
+  fig_total_trans_amt_x_total_trans_cnt: "total_trans_amt_x_total_trans_cnt.png"
+  fig_features_correlation_heatmap: "features_correlation_heatmap.png"
+metrics:
+  save_path: "./images/metrics/"
+models:
+  - save_path: "./models/"
+  - names:
+    - "LogisticRegression"
+    - "RandomForestClassifier"
+  - random_forest:
+    - n_estimators: 180
+    - max_depth: 13
+    - criterion: 'entropy'
+    - max_features: 'auto'
+    - random_state: 42
+random_state: 42
