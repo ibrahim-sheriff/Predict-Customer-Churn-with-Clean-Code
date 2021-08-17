@@ -1,6 +1,7 @@
 '''
 Author: Ibrahim Sherif
 Date: August, 2021
+This module implements the test script for main module of the customer churn project with clean code
 '''
 
 import logging
@@ -21,6 +22,8 @@ with open("config.yaml", 'r') as f:
 def test_import(file_path):
     """
     Test data import
+    Args:
+        file_path (str): The path to the csv file
     """
     try:
         df_data = cls.import_data(file_path)
@@ -52,7 +55,10 @@ def test_import(file_path):
 def test_eda(df_data):
     """
     Test perform eda function
+    Args:
+        df_data (pandas dataframe): df for the data to do EDA
     """
+    # Test function
     try:
         cls.perform_eda(df_data)
         logger.info("SUCCESS eda function worked")
@@ -61,6 +67,7 @@ def test_eda(df_data):
             "The dataframe is missing some columns for the eda %s %s",
             error, error)
 
+    # Check plots images presence
     save_path = config['eda']['save_path']
     try:
         for _, val in config['eda']['plots'].items():
@@ -75,9 +82,13 @@ def test_eda(df_data):
 def test_encoder_helper(df_data):
     """
     Test encoder helper
+    Args:
+        df_data (pandas dataframe): df_data for the data to encode
+    Return:
+        df_data (pandas dataframe): preprocessed df_data
     """
+    # Check column presence
     try:
-        # Check column presence
         assert set(df_data.columns.values).issuperset(
             set(config['data']['categorical_features']))
         logger.info(
@@ -87,6 +98,7 @@ def test_encoder_helper(df_data):
             "Not all categorical variables are available %s",
             error)
 
+    # Test function
     try:
         cls.encoder_helper(df_data, config['data']['categorical_features'])
         logger.info(
@@ -102,8 +114,16 @@ def test_encoder_helper(df_data):
 def test_perform_feature_engineering(df_data):
     """
     Test perform_feature_engineering function
+    Args:
+        df_data (pandas dataframe): df_data for the data to do feature engineering
+    Returns:
+        x_train (pandas dataframe): X training data
+        x_test (pandas dataframe): X testing data
+        y_train (pandas dataframe): y training data
+        y_test (pandas dataframe): y testing data
     """
     drop_columns = ['CLIENTNUM']
+    # Test function
     try:
         x_train, x_test, y_train, y_test = cls.perform_feature_engineering(
             df_data, drop_columns)
@@ -177,9 +197,19 @@ def test_perform_feature_engineering(df_data):
 def test_train_and_evaluate_model(x_train, x_test, y_train, y_test):
     """
     Test train_and_evaluate_model function
+    Args:
+        model (sklearn object): Model object
+        x_train (pandas dataframe): X training data
+        x_test (pandas dataframe): X testing data
+        y_train (pandas dataframe): y training data
+        y_test (pandas dataframe): y testing data
+    Returns:
+        model (sklearn object): Trained model object
     """
     model = RandomForestClassifier(random_state=config['random_state'])
     model_name = model.__class__.__name__
+    
+    # Testing function
     try:
         model = cls.train_and_evaluate_model(
             model, x_train, x_test, y_train, y_test)
@@ -188,6 +218,8 @@ def test_train_and_evaluate_model(x_train, x_test, y_train, y_test):
         logger.error("Model training/evaluting failed")
 
     image_name = f'classification_report_{model_name}.png'
+    
+    # Check classification report presence
     try:
         assert check_file_exists(config['metrics']['save_path'], image_name)
         logger.info("SUCCESS classification report image %s saved", image_name)
@@ -197,6 +229,7 @@ def test_train_and_evaluate_model(x_train, x_test, y_train, y_test):
             image_name,
             config['metrics']['save_path'])
 
+    # Check model pickle presence
     try:
         assert check_file_exists(
             config['models']['save_path'],
@@ -214,7 +247,12 @@ def test_train_and_evaluate_model(x_train, x_test, y_train, y_test):
 def test_roc_curve_image(x_train, y_train, model):
     """
     Test test_roc_curve_image function
+    Args:
+        x_train (pandas dataframe): df for the train feature data
+        y_train (pandas dataframe): df_data for the train target variable
+        model (sklearn object): Trained model
     """
+    # Test function
     data_split = "Train"
     try:
         cls.roc_curve_image(x_train, y_train, data_split, model)
@@ -222,6 +260,7 @@ def test_roc_curve_image(x_train, y_train, model):
     except BaseException:
         logger.error("There was a problem with the roc curve ")
 
+    # Check roc curve image presence
     image_name = f'{data_split}_roc_auc_curve.png'
     try:
         assert check_file_exists(config['metrics']['save_path'], image_name)
@@ -234,14 +273,20 @@ def test_roc_curve_image(x_train, y_train, model):
 def test_feature_importance_plot(model, x_data):
     """
     Test feature_importance_plot function
+    Args:
+        model (sklearn tree object): sklearn tree model containing feature_importance
+        x_data (pandas dataframe): df_data for the feature data
     """
     model_name = model.__class__.__name__
+
+    # Test function
     try:
         cls.feature_importance_plot(model, x_data)
         logger.info("SUCCESS computed feature importance plot")
     except BaseException:
         logger.error("There was a problem with the feature importance plots")
 
+    # Check shap feature importance image presence
     image_name = f'{model_name}_shap_feature_importance.png'
     try:
         assert check_file_exists(config['metrics']['save_path'], image_name)
@@ -254,6 +299,7 @@ def test_feature_importance_plot(model, x_data):
             image_name,
             config['metrics']['save_path'])
 
+    # Check model feature importance image presence    
     image_name = f'{model_name}_feature_importance.png'
     try:
         assert check_file_exists(config['metrics']['save_path'], image_name)

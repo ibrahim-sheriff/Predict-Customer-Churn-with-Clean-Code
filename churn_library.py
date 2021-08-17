@@ -2,6 +2,7 @@
 '''
 Author: Ibrahim Sherif
 Date: August, 2021
+This module implements the main script for the customer churn project with clean code
 '''
 
 # import libraries
@@ -51,7 +52,7 @@ def perform_eda(df_data):
     """
     Perform eda on df_data and save figures to images folder
     Args:
-        df_data (pandas dataframe): df_data for the data to do EDA
+        df_data (pandas dataframe): df for the data to do EDA
     Returns:
         None
     """
@@ -178,7 +179,7 @@ def encoder_helper(df_data, category_list):
     Helper function to turn each categorical column into a new column with
     propotion of churn for each category - associated with cell 15 from the notebook
     Args:
-        df_data (pandas dataframe): df_data for the data to do EDA
+        df_data (pandas dataframe): df_data for the data to encode
         category_list (array like): list of columns that contain categorical features
     Return:
         df_data (pandas dataframe): preprocessed df_data
@@ -257,13 +258,13 @@ def train_and_evaluate_model(model, x_train, x_test, y_train, y_test):
     """
     Train model and save results: images + metrics, and store models
     Args:
-        model: Model object
-        x_train: X training data
-        x_test: X testing data
-        y_train: y training data
-        y_test: y testing data
+        model (sklearn object): Model object
+        x_train (pandas dataframe): X training data
+        x_test (pandas dataframe): X testing data
+        y_train (pandas dataframe): y training data
+        y_test (pandas dataframe): y testing data
     Returns:
-        None
+        model (sklearn object): Trained model object
     """
     logger.info("Model training")
     model.fit(x_train, y_train)
@@ -301,10 +302,10 @@ def roc_curve_image(x_data, y_data, split_data, *models):
     """
     Plot the roc curve for all models
     Args:
-        x_data (pandas dataframe): df_data for the feature data
-        y_data (pandas dataframe): df_data for the target variable
+        x_data (pandas dataframe): df for the feature data
+        y_data (pandas dataframe): df for the target variable
         split_data (str): Data split name to compute metrics for
-        models (list): List for all models needed to plot the curve
+        models (list): List for all trained models needed to plot the curve
     Returns:
         None
     """
@@ -332,7 +333,7 @@ def feature_importance_plot(model, x_data):
     """
     Creates and stores the feature importance plot
     Args:
-        model (sklearn tree model): model object containing feature_importance
+        model (sklearn tree object): sklearn tree model containing feature_importance
         x_data (pandas dataframe): df_data for the feature data
     Returns:
         None
